@@ -3,7 +3,7 @@ import chalk from "chalk";
 import connection from "../dbStrategy/postgres.js";
 
 const getGames = async (req, res) => {
-  const { name } = req.query || "";
+  const name = req.query.name || "";
 
   try {
     const { rows: games } = await connection.query(
@@ -15,6 +15,7 @@ const getGames = async (req, res) => {
     res.status(200).send(games);
   } catch (error) {
     console.log(chalk.red(error));
+    res.sendStatus(500);
   }
 };
 
@@ -29,6 +30,7 @@ const createGame = async (req, res) => {
     res.sendStatus(201);
   } catch (error) {
     console.log(chalk.red(error));
+    res.sendStatus(500);
   }
 };
 

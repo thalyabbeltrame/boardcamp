@@ -10,6 +10,7 @@ const getCategories = async (_req, res) => {
     res.status(200).send(categories);
   } catch (error) {
     console.log(chalk.red(error));
+    res.sendStatus(500);
   }
 };
 
@@ -21,6 +22,7 @@ const createCategory = async (req, res) => {
     return res.status(201).send("Category created");
   } catch (error) {
     console.log(chalk.red(error));
+    res.sendStatus(500);
   }
 };
 

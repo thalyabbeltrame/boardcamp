@@ -12,6 +12,7 @@ const validateGame = async (req, res, next) => {
     next();
   } catch (error) {
     console.log(chalk.red(error));
+    res.sendStatus(500);
   }
 };
 
