@@ -8,13 +8,10 @@ const validateCategory = (req, res, next) => {
   try {
     const { error } = categorySchema.validate({ name });
 
-    if (error && error.details[0].type === "string.empty")
-      return res.status(400).send("Category name must not be empty");
-
     if (error && error.details[0].type === "any.invalid")
       return res.status(409).send("Category name already exists");
 
-    if (error) return res.status(422).send(error.details[0].message);
+    if (error) return res.status(400).send(error.details[0].message);
 
     next();
   } catch (error) {
@@ -22,4 +19,4 @@ const validateCategory = (req, res, next) => {
   }
 };
 
-export { validateCategory };
+export default validateCategory;

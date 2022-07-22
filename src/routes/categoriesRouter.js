@@ -5,7 +5,7 @@ import {
   createCategory,
 } from "../controllers/categoriesController.js";
 
-import { validateCategory } from "../middlewares/categoriesMiddleware.js";
+import validateCategory from "../middlewares/categoriesMiddleware.js";
 
 const categoriesRouter = Router();
 
