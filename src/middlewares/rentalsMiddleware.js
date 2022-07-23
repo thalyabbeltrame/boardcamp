@@ -1,6 +1,6 @@
 import chalk from "chalk";
 
-import rentalSchema from "../schemas/rentalSchema";
+import rentalSchema from "../schemas/rentalSchema.js";
 
 const validateRental = async (req, res, next) => {
   try {

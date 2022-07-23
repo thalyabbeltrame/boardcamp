@@ -7,21 +7,14 @@ const { rows: categoryIds } = await connection.query(
 );
 const validCategoryIds = categoryIds?.map(({ id }) => id);
 
-const { rows: gameNames } = await connection.query(`SELECT name FROM games`);
-const invalidGameNames = gameNames?.map(({ name }) => name);
-
 const gameSchema = Joi.object({
-  name: Joi.string()
-    .trim()
-    .invalid(...invalidGameNames)
-    .required(),
+  name: Joi.string().trim().required(),
   image: Joi.string().required(),
-  stockTotal: Joi.number().integer().positive().required(),
+  stockTotal: Joi.number().integer().greater(0).required(),
   categoryId: Joi.number()
-    .integer()
     .valid(...validCategoryIds)
     .required(),
-  pricePerDay: Joi.number().positive().required(),
+  pricePerDay: Joi.number().greater(0).required(),
 });
 
 export default gameSchema;

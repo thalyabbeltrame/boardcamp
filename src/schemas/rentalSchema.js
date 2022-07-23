@@ -1,6 +1,6 @@
 import Joi from "joi";
 
-import connection from "../dbStrategy/postgres";
+import connection from "../dbStrategy/postgres.js";
 
 const { rows: customerIds } = await connection.query(
   `SELECT id FROM customers`

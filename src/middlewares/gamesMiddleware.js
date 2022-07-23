@@ -1,13 +1,17 @@
+import chalk from "chalk";
+
+import connection from "../dbStrategy/postgres.js";
+
 import gameSchema from "../schemas/gameSchema.js";
 
 const validateGame = async (req, res, next) => {
   try {
-    const { error } = gameSchema.validate({ ...req.body });
-
-    if (error && error.details[0].type === "any.invalid")
-      return res.status(409).send("Game name already exists");
-
-    if (error) return res.status(400).send(error.details[0].message);
+    const { error } = gameSchema.validate(
+      { ...req.body },
+      { abortEarly: false }
+    );
+    if (error)
+      return res.status(400).send(error.details.map(({ message }) => message));
 
     next();
   } catch (error) {
@@ -16,4 +20,21 @@ const validateGame = async (req, res, next) => {
   }
 };
 
-export default validateGame;
+const checkIfGameNameAlreadyExists = async (req, res, next) => {
+  const { name } = req.body;
+
+  try {
+    const { rows: game } = await connection.query(
+      `SELECT * FROM games WHERE name = ($1)`,
+      [name]
+    );
+    if (game.length > 0) return res.sendStatus(409);
+
+    next();
+  } catch (error) {
+    console.log(chalk.red(error));
+    res.sendStatus(500);
+  }
+};
+
+export { validateGame, checkIfGameNameAlreadyExists };

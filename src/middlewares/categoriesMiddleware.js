@@ -5,11 +5,13 @@ import connection from "../dbStrategy/postgres.js";
 import categorySchema from "../schemas/categorySchema.js";
 
 const validateCategory = (req, res, next) => {
-  const { name } = req.body;
-
   try {
-    const { error } = categorySchema.validate({ name });
-    if (error) return res.sendStatus(400);
+    const { error } = categorySchema.validate(
+      { ...req.body },
+      { abortEarly: false }
+    );
+    if (error)
+      return res.status(400).send(error.details.map(({ message }) => message));
 
     next();
   } catch (error) {
@@ -26,7 +28,6 @@ const checkIfCategoryNameAlreadyExists = async (req, res, next) => {
       `SELECT * FROM categories WHERE name = ($1)`,
       [name]
     );
-
     if (category.length > 0) return res.sendStatus(409);
 
     next();
