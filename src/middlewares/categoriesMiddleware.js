@@ -1,5 +1,7 @@
 import chalk from "chalk";
 
+import connection from "../dbStrategy/postgres.js";
+
 import categorySchema from "../schemas/categorySchema.js";
 
 const validateCategory = (req, res, next) => {
@@ -7,11 +9,7 @@ const validateCategory = (req, res, next) => {
 
   try {
     const { error } = categorySchema.validate({ name });
-
-    if (error && error.details[0].type === "any.invalid")
-      return res.status(409).send("Category name already exists");
-
-    if (error) return res.status(400).send(error.details[0].message);
+    if (error) return res.sendStatus(400);
 
     next();
   } catch (error) {
@@ -20,4 +18,22 @@ const validateCategory = (req, res, next) => {
   }
 };
 
-export default validateCategory;
+const checkIfCategoryNameAlreadyExists = async (req, res, next) => {
+  const { name } = req.body;
+
+  try {
+    const { rows: category } = await connection.query(
+      `SELECT * FROM categories WHERE name = ($1)`,
+      [name]
+    );
+
+    if (category.length > 0) return res.sendStatus(409);
+
+    next();
+  } catch (error) {
+    console.log(chalk.red(error));
+    res.sendStatus(500);
+  }
+};
+
+export { validateCategory, checkIfCategoryNameAlreadyExists };
