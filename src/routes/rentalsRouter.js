@@ -18,7 +18,7 @@ const rentalsRouter = Router();
 
 rentalsRouter.get("/rentals", getRentals);
 rentalsRouter.post("/rentals", validateRental, createRental);
-rentalsRouter.put(
+rentalsRouter.post(
   "/rentals/:id/return",
   validateRentalId,
   checkIfRentalIsAlreadyFinished,

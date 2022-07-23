@@ -12,16 +12,12 @@ const validGameIds = gameIds?.map(({ id }) => id);
 
 const rentalSchema = Joi.object({
   customerId: Joi.number()
-    .integer()
-    .positive()
     .valid(...validCustomerIds)
     .required(),
   gameId: Joi.number()
-    .integer()
-    .positive()
     .valid(...validGameIds)
     .required(),
-  daysRented: Joi.number().integer().positive().required(),
+  daysRented: Joi.number().integer().greater(0).required(),
 });
 
 export default rentalSchema;

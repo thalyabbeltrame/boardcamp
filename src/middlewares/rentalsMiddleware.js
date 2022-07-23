@@ -1,12 +1,18 @@
 import chalk from "chalk";
 
+import connection from "../dbStrategy/postgres.js";
+
 import rentalSchema from "../schemas/rentalSchema.js";
 
 const validateRental = async (req, res, next) => {
   try {
-    const { error } = rentalSchema.validate({ ...req.body });
+    const { error } = rentalSchema.validate(
+      { ...req.body },
+      { abortEarly: false }
+    );
+    if (error)
+      return res.status(400).send(error.details.map(({ message }) => message));
 
-    if (error) return res.status(400).send(error.details[0].message);
     next();
   } catch (error) {
     console.log(chalk.red(error));
@@ -18,12 +24,11 @@ const validateRentalId = async (req, res, next) => {
   const { id } = req.params;
 
   try {
-    const rental = await connection.query(
+    const { rows: rental } = await connection.query(
       "SELECT * FROM rentals WHERE rentals.id = ($1)",
       [id]
     );
-
-    if (!rental.length) return res.sendStatus(404);
+    if (rental.length === 0) return res.sendStatus(404);
 
     next();
   } catch (error) {

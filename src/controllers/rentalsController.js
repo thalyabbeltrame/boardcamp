@@ -5,6 +5,8 @@ import connection from "../dbStrategy/postgres.js";
 
 const getRentals = async (req, res) => {
   const { customerId, gameId } = req.query;
+  if ((customerId && isNaN(customerId)) || (gameId && isNaN(gameId)))
+    return res.sendStatus(400);
 
   try {
     const { rows: rentals } = await connection.query(
@@ -15,14 +17,21 @@ const getRentals = async (req, res) => {
           customers.name AS "customerName",
           games.id AS "gameId",
           games.name AS "gameName",
-          categories.id AS "categoryId"
-          categories.name AS "categoryName",
+          categories.id AS "categoryId",
+          categories.name AS "categoryName"
         FROM rentals
           JOIN customers ON rentals."customerId" = customers.id
           JOIN games ON rentals."gameId" = games.id
           JOIN categories ON categories.id = games."categoryId"
-        ${customerId ? `WHERE customers.id = ${parseInt(customerId)}` : ""}
-        ${gameId ? `WHERE games.id = ${parseInt(gameId)}` : ""}
+        ${
+          customerId && gameId
+            ? `WHERE customers.id = ${customerId} AND games.id = ${gameId}`
+            : customerId
+            ? `WHERE customers.id = ${customerId}`
+            : gameId
+            ? `WHERE games.id = ${gameId}`
+            : ""
+        }
       `
     );
 
@@ -61,18 +70,18 @@ const createRental = async (req, res) => {
   const { customerId, gameId, daysRented } = req.body;
 
   try {
-    const pricePerDay = await connection.query(
-      `SELECT "pricePerDay" FROM games WHERE games.id = ($1)`,
+    const { rows: game } = await connection.query(
+      `SELECT * FROM games WHERE games.id = ($1)`,
       [gameId]
     );
 
     const rentDate = dayjs().format("YYYY-MM-DD");
-    const originalPrice = pricePerDay[0] * daysRented;
+    const originalPrice = game[0].pricePerDay * daysRented;
 
     await connection.query(
       `
         INSERT INTO rentals ("customerId", "gameId", "daysRented", "rentDate", "originalPrice", "returnDate", "delayFee") 
-        VALUES ($1, $2, $3, $4, $5, $6)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
       `,
       [customerId, gameId, daysRented, rentDate, originalPrice, null, null]
     );
