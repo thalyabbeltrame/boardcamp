@@ -81,9 +81,37 @@ const checkIfRentalIsStillActive = async (req, res, next) => {
   }
 };
 
+const checkGameAvailability = async (req, res, next) => {
+  const { gameId } = req.body;
+
+  try {
+    const { rows: rentals } = await connection.query(
+      `
+        SELECT * FROM rentals 
+        WHERE rentals."gameId" = ($1) AND rentals."returnDate" IS NULL
+      `,
+      [gameId]
+    );
+
+    const { rows: game } = await connection.query(
+      `SELECT * FROM games WHERE games.id = ($1)`,
+      [gameId]
+    );
+
+    const hasGameOnStock = game[0].stockTotal > rentals.length;
+    if (!hasGameOnStock) return res.sendStatus(400);
+
+    next();
+  } catch (error) {
+    console.log(chalk.red(error));
+    res.sendStatus(500);
+  }
+};
+
 export {
   validateRental,
   validateRentalId,
   checkIfRentalIsAlreadyFinished,
   checkIfRentalIsStillActive,
+  checkGameAvailability,
 };
