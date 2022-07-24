@@ -62,7 +62,7 @@ const checkIfCpfAlreadyExistsAndIsNotTheSameUser = async (req, res, next) => {
 
   try {
     const { rows: customer } = await connection.query(
-      `SELECT * FROM customers WHERE cpf = ($1) AND id != ($2)`,
+      `SELECT * FROM customers WHERE cpf = ($1) AND id <> ($2)`,
       [cpf, id]
     );
     if (customer.length > 0) return res.sendStatus(409);

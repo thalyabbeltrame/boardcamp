@@ -138,4 +138,35 @@ const deleteRental = async (req, res) => {
   }
 };
 
-export { getRentals, createRental, finishRental, deleteRental };
+const getStoreBilling = async (req, res) => {
+  try {
+    const { rows: rental } = await connection.query(
+      `
+        SELECT
+          SUM (rentals."originalPrice" + rentals."delayFee") AS "revenue",
+          COUNT (rentals.id) AS "rentals"
+        FROM rentals
+        WHERE rentals."returnDate" IS NOT NULL
+      `
+    );
+
+    const rentalResult = {
+      revenue: parseInt(rental[0].revenue) || 0,
+      rentals: parseInt(rental[0].rentals) || 0,
+      average: rental[0].revenue / rental[0].rentals || 0,
+    };
+
+    res.status(200).send(rentalResult);
+  } catch (error) {
+    console.log(chalk.red(error));
+    res.sendStatus(500);
+  }
+};
+
+export {
+  getRentals,
+  createRental,
+  finishRental,
+  deleteRental,
+  getStoreBilling,
+};

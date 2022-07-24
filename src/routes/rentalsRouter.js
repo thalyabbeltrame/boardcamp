@@ -5,6 +5,7 @@ import {
   createRental,
   finishRental,
   deleteRental,
+  getStoreBilling,
 } from "../controllers/rentalsController.js";
 
 import {
@@ -36,5 +37,6 @@ rentalsRouter.delete(
   checkIfRentalIsStillActive,
   deleteRental
 );
+rentalsRouter.get("/rentals/metrics", getStoreBilling);
 
 export default rentalsRouter;
