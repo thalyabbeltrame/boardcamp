@@ -2,10 +2,16 @@ import chalk from "chalk";
 
 import connection from "../dbStrategy/postgres.js";
 
-const getCategories = async (_req, res) => {
+const getCategories = async (req, res) => {
+  const { limit, offset } = req.query;
+
   try {
     const { rows: categories } = await connection.query(
-      `SELECT * FROM categories`
+      `
+        SELECT * FROM categories
+        LIMIT ($1) OFFSET ($2)
+      `,
+      [limit, offset]
     );
     res.status(200).send(categories);
   } catch (error) {

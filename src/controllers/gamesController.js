@@ -4,6 +4,7 @@ import connection from "../dbStrategy/postgres.js";
 
 const getGames = async (req, res) => {
   const name = req.query.name || "";
+  const { limit, offset } = req.query;
 
   try {
     const { rows: games } = await connection.query(
@@ -12,8 +13,9 @@ const getGames = async (req, res) => {
         FROM games 
         JOIN categories ON games."categoryId" = categories.id
         WHERE games.name ILIKE ($1)
+        LIMIT ($2) OFFSET ($3)
       `,
-      [`${name}%`]
+      [`${name}%`, limit, offset]
     );
     res.status(200).send(games);
   } catch (error) {

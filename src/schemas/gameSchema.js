@@ -14,7 +14,7 @@ const gameSchema = Joi.object({
   categoryId: Joi.number()
     .valid(...validCategoryIds)
     .required(),
-  pricePerDay: Joi.number().greater(0).required(),
+  pricePerDay: Joi.number().integer().greater(0).required(),
 });
 
 export default gameSchema;

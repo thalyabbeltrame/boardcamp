@@ -5,11 +5,16 @@ import connection from "../dbStrategy/postgres.js";
 
 const getCustomers = async (req, res) => {
   const cpf = req.query.cpf || "";
+  const { limit, offset } = req.query;
 
   try {
     const { rows: customers } = await connection.query(
-      `SELECT * FROM customers WHERE cpf LIKE ($1)`,
-      [`${cpf}%`]
+      `
+        SELECT * FROM customers 
+        WHERE cpf LIKE ($1)
+        LIMIT ($2) OFFSET ($3)
+      `,
+      [`${cpf}%`, limit, offset]
     );
 
     const customersResult = customers.map((customer) => ({

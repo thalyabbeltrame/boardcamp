@@ -5,6 +5,7 @@ import connection from "../dbStrategy/postgres.js";
 
 const getRentals = async (req, res) => {
   const { customerId, gameId } = req.query;
+  const { limit, offset } = req.query;
   if ((customerId && isNaN(customerId)) || (gameId && isNaN(gameId)))
     return res.sendStatus(400);
 
@@ -32,13 +33,18 @@ const getRentals = async (req, res) => {
             ? `WHERE games.id = ${gameId}`
             : ""
         }
-      `
+        LIMIT ($1) OFFSET ($2)
+      `,
+      [limit, offset]
     );
 
     const rentalsResult = rentals?.map((rental) => {
       const entry = {
         ...rental,
         rentDate: dayjs(rental.rentDate).format("YYYY-MM-DD"),
+        returnDate: rental.returnDate
+          ? dayjs(rental.returnDate).format("YYYY-MM-DD")
+          : null,
         customer: {
           id: rental.customerId,
           name: rental.customerName,
