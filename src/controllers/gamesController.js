@@ -26,6 +26,7 @@ const getGames = async (req, res) => {
 
 const createGame = async (req, res) => {
   const { name, image, stockTotal, categoryId, pricePerDay } = req.body;
+
   try {
     await connection.query(
       `

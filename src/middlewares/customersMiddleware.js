@@ -1,4 +1,5 @@
 import chalk from "chalk";
+import { stripHtml } from "string-strip-html";
 
 import connection from "../dbStrategy/postgres.js";
 
@@ -22,11 +23,14 @@ const validateCustomer = (req, res, next) => {
 
 const validateCustomerId = async (req, res, next) => {
   const { id } = req.params;
-  if (isNaN(id)) return res.sendStatus(400);
+  if (isNaN(id) || id % 1) return res.sendStatus(400);
 
   try {
     const { rows: customer } = await connection.query(
-      `SELECT * FROM customers WHERE id = ($1)`,
+      `
+        SELECT * FROM customers 
+        WHERE id = ($1)
+      `,
       [id]
     );
     if (customer.length === 0) return res.sendStatus(404);
@@ -40,11 +44,14 @@ const validateCustomerId = async (req, res, next) => {
 };
 
 const checkIfCpfAlreadyExists = async (req, res, next) => {
-  const { cpf } = req.body;
+  const cpf = stripHtml(req.body.cpf).result.trim();
 
   try {
     const { rows: customer } = await connection.query(
-      `SELECT * FROM customers WHERE cpf = ($1)`,
+      `
+        SELECT * FROM customers 
+        WHERE cpf = ($1)
+      `,
       [cpf]
     );
     if (customer.length > 0) return res.sendStatus(409);
@@ -57,12 +64,15 @@ const checkIfCpfAlreadyExists = async (req, res, next) => {
 };
 
 const checkIfCpfAlreadyExistsAndIsNotTheSameUser = async (req, res, next) => {
-  const { cpf } = req.body;
+  const cpf = stripHtml(req.body.cpf).result.trim();
   const { id } = req.params;
 
   try {
     const { rows: customer } = await connection.query(
-      `SELECT * FROM customers WHERE cpf = ($1) AND id <> ($2)`,
+      `
+        SELECT * FROM customers 
+        WHERE cpf = ($1) AND id <> ($2)
+      `,
       [cpf, id]
     );
     if (customer.length > 0) return res.sendStatus(409);

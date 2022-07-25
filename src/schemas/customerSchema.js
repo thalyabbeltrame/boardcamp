@@ -1,7 +1,7 @@
-import JoiBase from "@hapi/joi";
-import JoiDate from "@hapi/joi-date";
+import JoiImport from "joi";
+import JoiDate from "@joi/date";
 
-const Joi = JoiBase.extend(JoiDate);
+const Joi = JoiImport.extend(JoiDate);
 
 const phoneRegex = /^[0-9]{10,11}$/;
 const cpfRegex = /^[0-9]{11}$/;

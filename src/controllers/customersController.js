@@ -32,16 +32,11 @@ const getCustomers = async (req, res) => {
 const getCustomerById = async (_req, res) => {
   const { customer } = res.locals;
 
-  try {
-    const customerResult = {
-      ...customer,
-      birthday: dayjs(customer.birthday).format("YYYY-MM-DD"),
-    };
-    res.status(200).send(customerResult);
-  } catch (error) {
-    console.log(chalk.red(error));
-    res.sendStatus(500);
-  }
+  const customerResult = {
+    ...customer,
+    birthday: dayjs(customer.birthday).format("YYYY-MM-DD"),
+  };
+  res.status(200).send(customerResult);
 };
 
 const createCustomer = async (req, res) => {

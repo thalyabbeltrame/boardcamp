@@ -4,35 +4,37 @@ import dayjs from "dayjs";
 import connection from "../dbStrategy/postgres.js";
 
 const getRentals = async (req, res) => {
-  const { customerId, gameId } = req.query;
-  const { limit, offset } = req.query;
-  if ((customerId && isNaN(customerId)) || (gameId && isNaN(gameId)))
-    return res.sendStatus(400);
+  const { customerId, gameId, limit, offset } = req.query;
 
   try {
+    const filter =
+      customerId && gameId
+        ? `WHERE customers.id = ${customerId} AND games.id = ${gameId}`
+        : customerId
+        ? `WHERE customers.id = ${customerId}`
+        : gameId
+        ? `WHERE games.id = ${gameId}`
+        : "";
+
     const { rows: rentals } = await connection.query(
       `
         SELECT 
-          rentals.*, 
-          customers.id AS "customerId", 
-          customers.name AS "customerName",
-          games.id AS "gameId",
-          games.name AS "gameName",
-          categories.id AS "categoryId",
-          categories.name AS "categoryName"
+        rentals.*,
+        jsonb_build_object(
+            'id', customers.id,
+            'name', customers.name
+        ) as customer,
+        jsonb_build_object(
+            'id', games.id,
+            'name', games.name,
+            'categoryId', categories.id,
+            'categoryName', categories.name
+        ) as game
         FROM rentals
-          JOIN customers ON rentals."customerId" = customers.id
-          JOIN games ON rentals."gameId" = games.id
-          JOIN categories ON categories.id = games."categoryId"
-        ${
-          customerId && gameId
-            ? `WHERE customers.id = ${customerId} AND games.id = ${gameId}`
-            : customerId
-            ? `WHERE customers.id = ${customerId}`
-            : gameId
-            ? `WHERE games.id = ${gameId}`
-            : ""
-        }
+        JOIN customers ON rentals."customerId" = customers.id
+        JOIN games ON rentals."gameId" = games.id
+        JOIN categories ON categories.id = games."categoryId"
+        ${filter}
         LIMIT ($1) OFFSET ($2)
       `,
       [limit, offset]
@@ -45,22 +47,7 @@ const getRentals = async (req, res) => {
         returnDate: rental.returnDate
           ? dayjs(rental.returnDate).format("YYYY-MM-DD")
           : null,
-        customer: {
-          id: rental.customerId,
-          name: rental.customerName,
-        },
-        game: {
-          id: rental.gameId,
-          name: rental.gameName,
-          categoryId: rental.categoryId,
-          categoryName: rental.categoryName,
-        },
       };
-
-      delete entry.customerName;
-      delete entry.gameName;
-      delete entry.categoryId;
-      delete entry.categoryName;
 
       return entry;
     });
@@ -74,15 +61,11 @@ const getRentals = async (req, res) => {
 
 const createRental = async (req, res) => {
   const { customerId, gameId, daysRented } = req.body;
+  const { game } = res.locals;
 
   try {
-    const { rows: game } = await connection.query(
-      `SELECT * FROM games WHERE games.id = ($1)`,
-      [gameId]
-    );
-
     const rentDate = dayjs().format("YYYY-MM-DD");
-    const originalPrice = game[0].pricePerDay * daysRented;
+    const originalPrice = game.pricePerDay * daysRented;
 
     await connection.query(
       `
@@ -100,7 +83,7 @@ const createRental = async (req, res) => {
 };
 
 const finishRental = async (req, res) => {
-  const { id: rentalId } = req.params;
+  const { id } = req.params;
   const { daysRented, rentDate, pricePerDay } = res.locals.rental;
 
   try {
@@ -113,7 +96,7 @@ const finishRental = async (req, res) => {
         UPDATE rentals SET "returnDate" = ($1), "delayFee" = ($2)
         WHERE id = ($3)
       `,
-      [returnDate, delayFee, rentalId]
+      [returnDate, delayFee, id]
     );
 
     res.sendStatus(200);
@@ -124,12 +107,16 @@ const finishRental = async (req, res) => {
 };
 
 const deleteRental = async (req, res) => {
-  const { id: rentalId } = req.params;
+  const { id } = req.params;
 
   try {
-    await connection.query(`DELETE FROM rentals WHERE rentals.id = ($1)`, [
-      rentalId,
-    ]);
+    await connection.query(
+      `
+        DELETE FROM rentals 
+        WHERE rentals.id = ($1)
+      `,
+      [id]
+    );
 
     res.sendStatus(200);
   } catch (error) {
@@ -138,7 +125,7 @@ const deleteRental = async (req, res) => {
   }
 };
 
-const getStoreBilling = async (req, res) => {
+const getStoreBilling = async (_req, res) => {
   try {
     const { rows: rental } = await connection.query(
       `

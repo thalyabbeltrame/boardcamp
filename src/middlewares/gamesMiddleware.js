@@ -1,4 +1,5 @@
 import chalk from "chalk";
+import { stripHtml } from "string-strip-html";
 
 import connection from "../dbStrategy/postgres.js";
 
@@ -21,11 +22,14 @@ const validateGame = async (req, res, next) => {
 };
 
 const checkIfGameNameAlreadyExists = async (req, res, next) => {
-  const { name } = req.body;
+  const name = stripHtml(req.body.name).result.trim();
 
   try {
     const { rows: game } = await connection.query(
-      `SELECT * FROM games WHERE name = ($1)`,
+      `
+        SELECT * FROM games 
+        WHERE name = ($1)
+      `,
       [name]
     );
     if (game.length > 0) return res.sendStatus(409);

@@ -22,10 +22,14 @@ const validateRental = async (req, res, next) => {
 
 const validateRentalId = async (req, res, next) => {
   const { id } = req.params;
+  if (isNaN(id) || id % 1) return res.sendStatus(400);
 
   try {
     const { rows: rental } = await connection.query(
-      "SELECT * FROM rentals WHERE rentals.id = ($1)",
+      `
+        SELECT * FROM rentals 
+        WHERE rentals.id = ($1)
+      `,
       [id]
     );
     if (rental.length === 0) return res.sendStatus(404);
@@ -38,7 +42,7 @@ const validateRentalId = async (req, res, next) => {
 };
 
 const checkIfRentalIsAlreadyFinished = async (req, res, next) => {
-  const { id: rentalId } = req.params;
+  const { id } = req.params;
 
   try {
     const { rows: rental } = await connection.query(
@@ -48,7 +52,7 @@ const checkIfRentalIsAlreadyFinished = async (req, res, next) => {
         JOIN games ON games.id = rentals."gameId"
         WHERE rentals.id = ($1)
       `,
-      [rentalId]
+      [id]
     );
 
     const isRentalFinished = rental[0].returnDate !== null;
@@ -63,12 +67,15 @@ const checkIfRentalIsAlreadyFinished = async (req, res, next) => {
 };
 
 const checkIfRentalIsStillActive = async (req, res, next) => {
-  const { id: rentalId } = req.params;
+  const { id } = req.params;
 
   try {
     const { rows: rental } = await connection.query(
-      `SELECT * FROM rentals WHERE rentals.id = ($1)`,
-      [rentalId]
+      `
+        SELECT * FROM rentals 
+        WHERE rentals.id = ($1)
+      `,
+      [id]
     );
 
     const isRentalStillActive = rental[0].returnDate === null;
@@ -94,13 +101,17 @@ const checkGameAvailability = async (req, res, next) => {
     );
 
     const { rows: game } = await connection.query(
-      `SELECT * FROM games WHERE games.id = ($1)`,
+      `
+        SELECT * FROM games 
+        WHERE games.id = ($1)
+      `,
       [gameId]
     );
 
-    const hasGameOnStock = game[0].stockTotal > rentals.length;
-    if (!hasGameOnStock) return res.sendStatus(400);
+    const hasGameInStock = game[0].stockTotal > rentals.length;
+    if (!hasGameInStock) return res.sendStatus(400);
 
+    res.locals.game = game[0];
     next();
   } catch (error) {
     console.log(chalk.red(error));

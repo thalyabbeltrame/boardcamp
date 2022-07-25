@@ -11,9 +11,7 @@ const gameSchema = Joi.object({
   name: Joi.string().trim().required(),
   image: Joi.string().required(),
   stockTotal: Joi.number().integer().greater(0).required(),
-  categoryId: Joi.number()
-    .valid(...validCategoryIds)
-    .required(),
+  categoryId: Joi.valid(...validCategoryIds).required(),
   pricePerDay: Joi.number().integer().greater(0).required(),
 });
 
