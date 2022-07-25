@@ -10,19 +10,17 @@ const getCustomers = async (req, res) => {
   try {
     const { rows: customers } = await connection.query(
       `
-        SELECT * FROM customers 
+        SELECT 
+          customers.*, 
+          birthday::VARCHAR 
+        FROM customers 
         WHERE cpf LIKE ($1)
         LIMIT ($2) OFFSET ($3)
       `,
       [`${cpf}%`, limit, offset]
     );
 
-    const customersResult = customers.map((customer) => ({
-      ...customer,
-      birthday: dayjs(customer.birthday).format("YYYY-MM-DD"),
-    }));
-
-    res.status(200).send(customersResult);
+    res.status(200).send(customers);
   } catch (error) {
     console.log(chalk.red(error));
     res.sendStatus(500);
@@ -32,11 +30,7 @@ const getCustomers = async (req, res) => {
 const getCustomerById = async (_req, res) => {
   const { customer } = res.locals;
 
-  const customerResult = {
-    ...customer,
-    birthday: dayjs(customer.birthday).format("YYYY-MM-DD"),
-  };
-  res.status(200).send(customerResult);
+  res.status(200).send(customer);
 };
 
 const createCustomer = async (req, res) => {

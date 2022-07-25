@@ -28,7 +28,10 @@ const validateCustomerId = async (req, res, next) => {
   try {
     const { rows: customer } = await connection.query(
       `
-        SELECT * FROM customers 
+        SELECT 
+          customers.*, 
+          birthday::VARCHAR 
+        FROM customers 
         WHERE id = ($1)
       `,
       [id]

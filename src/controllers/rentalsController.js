@@ -19,17 +19,19 @@ const getRentals = async (req, res) => {
     const { rows: rentals } = await connection.query(
       `
         SELECT 
-        rentals.*,
-        jsonb_build_object(
-            'id', customers.id,
-            'name', customers.name
-        ) as customer,
-        jsonb_build_object(
-            'id', games.id,
-            'name', games.name,
-            'categoryId', categories.id,
-            'categoryName', categories.name
-        ) as game
+          rentals.*,
+          rentals."rentDate"::VARCHAR,
+          rentals."returnDate"::VARCHAR,
+          jsonb_build_object(
+              'id', customers.id,
+              'name', customers.name
+          ) as customer,
+          jsonb_build_object(
+              'id', games.id,
+              'name', games.name,
+              'categoryId', categories.id,
+              'categoryName', categories.name
+          ) as game
         FROM rentals
         JOIN customers ON rentals."customerId" = customers.id
         JOIN games ON rentals."gameId" = games.id
@@ -40,19 +42,7 @@ const getRentals = async (req, res) => {
       [limit, offset]
     );
 
-    const rentalsResult = rentals?.map((rental) => {
-      const entry = {
-        ...rental,
-        rentDate: dayjs(rental.rentDate).format("YYYY-MM-DD"),
-        returnDate: rental.returnDate
-          ? dayjs(rental.returnDate).format("YYYY-MM-DD")
-          : null,
-      };
-
-      return entry;
-    });
-
-    res.status(200).send(rentalsResult);
+    res.status(200).send(rentals);
   } catch (error) {
     console.log(chalk.red(error));
     res.sendStatus(500);
@@ -129,21 +119,16 @@ const getStoreBilling = async (_req, res) => {
   try {
     const { rows: rental } = await connection.query(
       `
-        SELECT
-          SUM (rentals."originalPrice" + rentals."delayFee") AS "revenue",
-          COUNT (rentals.id) AS "rentals"
-        FROM rentals
+        SELECT 
+          COALESCE(SUM("originalPrice") + SUM("delayFee"), 0)::double precision AS revenue, 
+          COUNT(id)::double precision AS rentals, 
+          COALESCE((SUM("originalPrice") + SUM("delayFee")) / COUNT(id), 0)::double precision AS average 
+        FROM rentals 
         WHERE rentals."returnDate" IS NOT NULL
       `
     );
 
-    const rentalResult = {
-      revenue: parseInt(rental[0].revenue) || 0,
-      rentals: parseInt(rental[0].rentals) || 0,
-      average: rental[0].revenue / rental[0].rentals || 0,
-    };
-
-    res.status(200).send(rentalResult);
+    res.status(200).send(rental);
   } catch (error) {
     console.log(chalk.red(error));
     res.sendStatus(500);
