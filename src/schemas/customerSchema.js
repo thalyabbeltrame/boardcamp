@@ -10,7 +10,7 @@ const customerSchema = Joi.object({
   name: Joi.string().trim().required(),
   phone: Joi.string().pattern(phoneRegex).required(),
   cpf: Joi.string().pattern(cpfRegex).required(),
-  birthday: Joi.date().format("YYYY-MM-DD").required(),
+  birthday: Joi.date().max("now").format("YYYY-MM-DD").required(),
 });
 
 export default customerSchema;

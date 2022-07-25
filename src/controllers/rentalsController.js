@@ -83,7 +83,8 @@ const finishRental = async (req, res) => {
 
     await connection.query(
       `
-        UPDATE rentals SET "returnDate" = ($1), "delayFee" = ($2)
+        UPDATE rentals 
+        SET "returnDate" = ($1), "delayFee" = ($2)
         WHERE id = ($3)
       `,
       [returnDate, delayFee, id]

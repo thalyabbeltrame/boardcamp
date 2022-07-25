@@ -9,7 +9,9 @@ const getGames = async (req, res) => {
   try {
     const { rows: games } = await connection.query(
       `
-        SELECT games.*, categories.name as "categoryName" 
+        SELECT 
+          games.*, 
+          categories.name as "categoryName" 
         FROM games 
         JOIN categories ON games."categoryId" = categories.id
         WHERE games.name ILIKE ($1)
